@@ -5,7 +5,7 @@ using namespace std;
 
 void computeLPSArray(char* pat, int M, int* lps);
 void KMPSearch(char* pat, char* txt, char* otherPat, bool isFirstWordMissing);
-size_t hopWord(size_t initial, bool isForward, char* txt, char* pat);
+size_t hopWord(size_t initial, bool isForward, char* txt, char* pat, bool isCornerWordMissing);
 bool checkOther(size_t foundIndex, char* pat, char* lastPat, char* txt);
 void getFirstPart(string statement, size_t emptyBoxIndex, char** firstStatementPart);
 void getLastPart(string statement, size_t emptyBoxIndex, char** lastStatementPart);
@@ -28,7 +28,7 @@ int main(int argc, const char * argv[]) {
         while(getline(statementFile, statement)) {
             count++;
             size_t emptyBoxIndex = string::npos;
-            for(int i = 0; i < statement.length() - 3; i++) {
+            for(int i = 0; i < statement.length() - 2; i++) {
                 if(statement[i] == '_' && statement[i+1] == '_' && statement[i+2] == '_')
                     emptyBoxIndex = i;
             }
@@ -81,7 +81,7 @@ void getLastPart(string statement, size_t emptyBoxIndex, char** lastStatementPar
     strcpy(*lastStatementPart, lastPart.c_str());
 }
 
-size_t hopWord(size_t initial, bool isForward, char* txt, char* pat) {
+size_t hopWord(size_t initial, bool isForward, char* txt, char* pat, bool isCornerWordMissing) {
     size_t nextSpace = initial;
     size_t patLength = strlen(pat);
     
@@ -96,6 +96,8 @@ size_t hopWord(size_t initial, bool isForward, char* txt, char* pat) {
         }
         
         if(foundIndex != string::npos) {
+            if(isCornerWordMissing) break;
+            
             if(isForward && pat[0] == nextChar) break;
             else if(!isForward && pat[patLength - 1] == nextChar) break;
         }
@@ -104,6 +106,8 @@ size_t hopWord(size_t initial, bool isForward, char* txt, char* pat) {
             nextSpace++;
         else
             nextSpace--;
+        
+        if(nextSpace == 0) break;
     }
     
     return nextSpace;
@@ -114,7 +118,7 @@ bool checkOther(size_t foundIndex, char* pat, char* lastPat, char* txt) {
     size_t missingStartingPoint = foundIndex + patLength;
     
     //Hop 1 word
-    size_t nextSpace = hopWord(missingStartingPoint, true, txt, lastPat);
+    size_t nextSpace = hopWord(missingStartingPoint, true, txt, lastPat, false);
     
     //Last part check
     size_t lastStatementLength = strlen(lastPat);
@@ -163,7 +167,7 @@ void KMPSearch(char* pat, char* txt, char* otherPat, bool isFirstWordMissing) {
                 string parsedTxt = txt;
                 if(isFirstWordMissing) {
                     //Hop 1 word backward
-                    size_t nextSpace = hopWord(i-j - 1, false, txt, pat);
+                    size_t nextSpace = hopWord(i-j - 1, false, txt, pat, true);
                     
                     cout << "Original: " << "___" << pat << endl;
                     cout << "Found: " << parsedTxt.substr(nextSpace, i-j-nextSpace) << pat << endl;
@@ -171,7 +175,7 @@ void KMPSearch(char* pat, char* txt, char* otherPat, bool isFirstWordMissing) {
                 }
                 else {
                     //Hop 1 word forward
-                    size_t nextSpace = hopWord(i-j + M, true, txt, pat);
+                    size_t nextSpace = hopWord(i-j + M, true, txt, pat, true);
                     
                     cout << "Original: " << pat << "___" << endl;
                     cout << "Found: " << pat << parsedTxt.substr(i-j + M, nextSpace - (i-j+M)) << endl;
@@ -191,9 +195,7 @@ void KMPSearch(char* pat, char* txt, char* otherPat, bool isFirstWordMissing) {
         }
     }
     
-    if(otherPat != nullptr) {
-        cout << "Original:" << pat << "___" << otherPat << endl;
-    }
+    cout << "---------" << endl;
     cout << "Statement not found!" << endl;
     cout << "---------" << endl;
         
