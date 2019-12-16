@@ -27,7 +27,11 @@ int main(int argc, const char * argv[]) {
         
         while(getline(statementFile, statement)) {
             count++;
-            size_t emptyBoxIndex = statement.find("___");
+            size_t emptyBoxIndex = string::npos;
+            for(int i = 0; i < statement.length() - 3; i++) {
+                if(statement[i] == '_' && statement[i+1] == '_' && statement[i+2] == '_')
+                    emptyBoxIndex = i;
+            }
             
             char* firstStatementPart = nullptr;
             char* lastStatementPart = nullptr;
@@ -49,6 +53,7 @@ int main(int argc, const char * argv[]) {
             if(firstStatementPart != nullptr) delete[] firstStatementPart;
             if(lastStatementPart != nullptr) delete[] lastStatementPart;
         }
+        
         statementFile.close();
     }
     
@@ -83,7 +88,14 @@ size_t hopWord(size_t initial, bool isForward, char* txt, char* pat) {
     while(true) {
         string finishers = " !?,.";
         char nextChar = txt[nextSpace];
-        if(finishers.find(nextChar) != string::npos) {
+        
+        size_t foundIndex = string::npos;
+        for(int i = 0; i < finishers.length(); i++) {
+            if(finishers[i] == nextChar)
+                foundIndex = i;
+        }
+        
+        if(foundIndex != string::npos) {
             if(isForward && pat[0] == nextChar) break;
             else if(!isForward && pat[patLength - 1] == nextChar) break;
         }
