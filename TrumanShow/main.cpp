@@ -84,19 +84,25 @@ void getLastPart(string statement, size_t emptyBoxIndex, char** lastStatementPar
 size_t hopWord(size_t initial, bool isForward, char* txt, char* pat, bool isCornerWordMissing) {
     size_t nextSpace = initial;
     size_t patLength = strlen(pat);
+    string finishers = " !?,.";
     
     while(true) {
-        string finishers = " !?,.";
+        if(nextSpace >= patLength + initial) return string::npos;
         char nextChar = txt[nextSpace];
         
         size_t foundIndex = string::npos;
-        for(int i = 0; i < finishers.length(); i++) {
-            if(finishers[i] == nextChar)
-                foundIndex = i;
+        if(isCornerWordMissing) {
+            if(nextChar == ' ') foundIndex = 1;
+        }
+        else {
+            for(int i = 0; i < finishers.length(); i++) {
+                if(finishers[i] == nextChar)
+                    foundIndex = i;
+            }
         }
         
         if(foundIndex != string::npos) {
-            if(isCornerWordMissing) break;
+            if(isCornerWordMissing)break;
             
             if(isForward && pat[0] == nextChar) break;
             else if(!isForward && pat[patLength - 1] == nextChar) break;
@@ -119,6 +125,7 @@ bool checkOther(size_t foundIndex, char* pat, char* lastPat, char* txt) {
     
     //Hop 1 word
     size_t nextSpace = hopWord(missingStartingPoint, true, txt, lastPat, false);
+    if(nextSpace == string::npos) return false;
     
     //Last part check
     size_t lastStatementLength = strlen(lastPat);
