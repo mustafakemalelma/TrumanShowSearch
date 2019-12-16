@@ -5,14 +5,15 @@ using namespace std;
 
 void computeLPSArray(char* pat, int M, int* lps);
 void KMPSearch(char* pat, char* txt, char* otherPat, bool isFirstWordMissing);
-unsigned long hopWord(unsigned long initial, bool isForward, char* txt, char* pat);
-bool checkOther(unsigned long foundIndex, char* pat, char* lastPat, char* txt);
-void getFirstPart(string statement, unsigned long emptyBoxIndex, char** firstStatementPart);
-void getLastPart(string statement, unsigned long emptyBoxIndex, char** lastStatementPart);
+size_t hopWord(size_t initial, bool isForward, char* txt, char* pat);
+bool checkOther(size_t foundIndex, char* pat, char* lastPat, char* txt);
+void getFirstPart(string statement, size_t emptyBoxIndex, char** firstStatementPart);
+void getLastPart(string statement, size_t emptyBoxIndex, char** lastStatementPart);
 
 int main(int argc, const char * argv[]) {
     
     auto start = chrono::high_resolution_clock::now();
+    int count = 0;
     
     //Get the file and store in a char array
     ifstream trumanShowFile("the_truman_show_script.txt");
@@ -25,7 +26,8 @@ int main(int argc, const char * argv[]) {
         string statement;
         
         while(getline(statementFile, statement)) {
-            unsigned long emptyBoxIndex = statement.find("___");
+            count++;
+            size_t emptyBoxIndex = statement.find("___");
             
             char* firstStatementPart = nullptr;
             char* lastStatementPart = nullptr;
@@ -55,27 +57,28 @@ int main(int argc, const char * argv[]) {
     auto stop = chrono::high_resolution_clock::now();
     auto duration = chrono::duration_cast<chrono::milliseconds>(stop - start);
     
-    cout << "Duration: " << duration.count() << endl;
+    cout << "Statement Count: " << count << endl;
+    cout << "Duration: " << duration.count() << "ms" << endl;
     
     return 0;
 }
 
-void getFirstPart(string statement, unsigned long emptyBoxIndex, char** firstStatementPart) {
+void getFirstPart(string statement, size_t emptyBoxIndex, char** firstStatementPart) {
     string firstPart = statement.substr(0, emptyBoxIndex);
     *firstStatementPart = new char[firstPart.length()];
     strcpy(*firstStatementPart, firstPart.c_str());
 }
 
-void getLastPart(string statement, unsigned long emptyBoxIndex, char** lastStatementPart) {
+void getLastPart(string statement, size_t emptyBoxIndex, char** lastStatementPart) {
     unsigned long lastPartSize = statement.length() - (emptyBoxIndex + 3);
     string lastPart = statement.substr(emptyBoxIndex + 3, lastPartSize);
     *lastStatementPart = new char [lastPart.length()];
     strcpy(*lastStatementPart, lastPart.c_str());
 }
 
-unsigned long hopWord(unsigned long initial, bool isForward, char* txt, char* pat) {
-    unsigned long nextSpace = initial;
-    unsigned long patLength = strlen(pat);
+size_t hopWord(size_t initial, bool isForward, char* txt, char* pat) {
+    size_t nextSpace = initial;
+    size_t patLength = strlen(pat);
     
     while(true) {
         string finishers = " !?,.";
@@ -94,17 +97,17 @@ unsigned long hopWord(unsigned long initial, bool isForward, char* txt, char* pa
     return nextSpace;
 }
 
-bool checkOther(unsigned long foundIndex, char* pat, char* lastPat, char* txt) {
-    unsigned long patLength = strlen(pat);
-    unsigned long missingStartingPoint = foundIndex + patLength;
+bool checkOther(size_t foundIndex, char* pat, char* lastPat, char* txt) {
+    size_t patLength = strlen(pat);
+    size_t missingStartingPoint = foundIndex + patLength;
     
     //Hop 1 word
-    unsigned long nextSpace = hopWord(missingStartingPoint, true, txt, lastPat);
+    size_t nextSpace = hopWord(missingStartingPoint, true, txt, lastPat);
     
     //Last part check
-    unsigned long lastStatementLength = strlen(lastPat);
+    size_t lastStatementLength = strlen(lastPat);
     long foundLast = nextSpace;
-    for (unsigned long i = 0; i < lastStatementLength - 1; i++){
+    for (size_t i = 0; i < lastStatementLength - 1; i++){
         if(txt[nextSpace + i] != lastPat[i]){
             foundLast = -1;
             break;
@@ -112,7 +115,7 @@ bool checkOther(unsigned long foundIndex, char* pat, char* lastPat, char* txt) {
     }
     
     if(foundLast != -1){
-        unsigned long lengtOfMissingWord = foundLast - missingStartingPoint;
+        size_t lengtOfMissingWord = foundLast - missingStartingPoint;
         string parsedTxt = txt;
         cout << "Original: " << pat << "___" << lastPat << endl;
         cout << "Found: " << pat << parsedTxt.substr(missingStartingPoint, lengtOfMissingWord) << lastPat << endl;
@@ -148,7 +151,7 @@ void KMPSearch(char* pat, char* txt, char* otherPat, bool isFirstWordMissing) {
                 string parsedTxt = txt;
                 if(isFirstWordMissing) {
                     //Hop 1 word backward
-                    unsigned long nextSpace = hopWord(i-j - 1, false, txt, pat);
+                    size_t nextSpace = hopWord(i-j - 1, false, txt, pat);
                     
                     cout << "Original: " << "___" << pat << endl;
                     cout << "Found: " << parsedTxt.substr(nextSpace, i-j-nextSpace) << pat << endl;
@@ -156,7 +159,7 @@ void KMPSearch(char* pat, char* txt, char* otherPat, bool isFirstWordMissing) {
                 }
                 else {
                     //Hop 1 word forward
-                    unsigned long nextSpace = hopWord(i-j + M, true, txt, pat);
+                    size_t nextSpace = hopWord(i-j + M, true, txt, pat);
                     
                     cout << "Original: " << pat << "___" << endl;
                     cout << "Found: " << pat << parsedTxt.substr(i-j + M, nextSpace - (i-j+M)) << endl;
